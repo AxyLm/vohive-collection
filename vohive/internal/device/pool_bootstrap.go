@@ -691,7 +691,7 @@ func (p *Pool) AddWorkerFromConfig(devCfg config.DeviceConfig) (*Worker, error) 
 	}(w)
 
 	go func(worker *Worker) {
-		ticker := time.NewTicker(60 * time.Second)
+		ticker := time.NewTicker(20 * time.Second)
 		defer ticker.Stop()
 		for {
 			select {

@@ -1754,7 +1754,7 @@ func (p *Pool) startAllSynchronousLegacy() error {
 
 		// 短信定时轮询（按 smsMode 分支）
 		go func(worker *Worker) {
-			ticker := time.NewTicker(60 * time.Second)
+			ticker := time.NewTicker(20 * time.Second)
 			defer ticker.Stop()
 			for {
 				select {
