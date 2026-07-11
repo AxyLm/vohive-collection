@@ -252,6 +252,7 @@ func (s *Server) newRouter() *gin.Engine {
 		// ===== 系统设置 =====
 		api.GET("/settings/notifications", s.handleGetNotificationSettings)    // 获取通知设置
 		api.PUT("/settings/notifications", s.handleUpdateNotificationSettings) // 更新通知设置
+		api.POST("/settings/notifications/wecom/test", s.handleTestWeComNotification)
 		api.POST("/settings/notifications/webhook/test", s.handleTestWebhookNotification)
 		api.POST("/settings/notifications/bark/test", s.handleTestBarkNotification)
 		api.POST("/settings/notifications/email/test", s.handleTestEmailNotification)

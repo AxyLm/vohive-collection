@@ -8,6 +8,7 @@ import {
   type SaveNotificationsResponse,
   type SystemInfo,
   type TestWebhookResponse,
+  type TestWeComResponse,
   type WebhookSettings,
   type BarkSettings,
   type TestBarkResponse,
@@ -73,6 +74,11 @@ type PushplusForm = {
   channel: string
 }
 
+type WeComForm = {
+  enabled: boolean
+  webhook_url: string
+}
+
 const DEFAULT_PASSWORD_FORM: PasswordForm = {
   old_password: '',
   new_password: '',
@@ -121,6 +127,11 @@ const DEFAULT_PUSHPLUS_FORM: PushplusForm = {
   channel: 'wechat'
 }
 
+const DEFAULT_WECOM_FORM: WeComForm = {
+  enabled: false,
+  webhook_url: ''
+}
+
 const DEFAULT_WEBHOOK_SETTINGS: WebhookSettings = {
   enabled: false,
   urls: [],
@@ -161,6 +172,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const telegramForm = ref<TelegramForm>({ ...DEFAULT_TELEGRAM_FORM })
   const feishuForm = ref<FeishuForm>({ ...DEFAULT_FEISHU_FORM })
   const qqForm = ref<QQForm>({ ...DEFAULT_QQ_FORM })
+  const wecomForm = ref<WeComForm>({ ...DEFAULT_WECOM_FORM })
   const webhookSettings = ref<WebhookSettings>({ ...DEFAULT_WEBHOOK_SETTINGS })
   const barkSettings = ref<BarkSettings>({ ...DEFAULT_BARK_SETTINGS })
   const emailForm = ref<EmailForm>({ ...DEFAULT_EMAIL_FORM })
@@ -170,6 +182,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const loadingNotifications = ref(false)
   const savingNotifications = ref(false)
   const testingWebhook = ref(false)
+  const testingWeCom = ref(false)
   const testingBark = ref(false)
   const testingEmail = ref(false)
   const changingPassword = ref(false)
@@ -197,6 +210,7 @@ export const useSettingsStore = defineStore('settings', () => {
       const tg = result.data.telegram || {}
       const fs = result.data.feishu || {}
       const qq = result.data.qq || {}
+      const wecom = result.data.wecom || {}
       const webhook = result.data.webhook || {}
       telegramForm.value = {
         enabled: !!tg.enabled,
@@ -218,6 +232,10 @@ export const useSettingsStore = defineStore('settings', () => {
         app_secret: qq.app_secret || '',
         group_ids: qq.group_ids || '',
         direct_ids: qq.direct_ids || ''
+      }
+      wecomForm.value = {
+        enabled: !!wecom.enabled,
+        webhook_url: wecom.webhook_url || ''
       }
       webhookSettings.value = {
         enabled: !!webhook.enabled,
@@ -315,6 +333,10 @@ export const useSettingsStore = defineStore('settings', () => {
         topic: pushplusForm.value.topic || '',
         channel: pushplusForm.value.channel || ''
       },
+      wecom: {
+        enabled: !!wecomForm.value.enabled,
+        webhook_url: String(wecomForm.value.webhook_url || '').trim()
+      },
       webhook: {
         enabled: !!webhookSettings.value.enabled,
         urls: Array.isArray(webhookSettings.value.urls) ? webhookSettings.value.urls : [],
@@ -336,6 +358,19 @@ export const useSettingsStore = defineStore('settings', () => {
 
   async function saveNotificationsFromForms() {
     return saveNotifications(buildNotificationsPayload())
+  }
+
+  async function testWeComFromForm() {
+    testingWeCom.value = true
+    const result = await systemService.testWeCom({
+      enabled: !!wecomForm.value.enabled,
+      webhook_url: String(wecomForm.value.webhook_url || '').trim()
+    })
+    if (!result.ok) {
+      error.value = result.error
+    }
+    testingWeCom.value = false
+    return result as { ok: true; data: TestWeComResponse } | { ok: false; error: AppError }
   }
 
   async function testWebhookFromForm() {
@@ -425,6 +460,7 @@ export const useSettingsStore = defineStore('settings', () => {
     telegramForm,
     feishuForm,
     qqForm,
+    wecomForm,
     webhookSettings,
     barkSettings,
     emailForm,
@@ -433,6 +469,7 @@ export const useSettingsStore = defineStore('settings', () => {
     loadingNotifications,
     savingNotifications,
     testingWebhook,
+    testingWeCom,
     testingBark,
     testingEmail,
     changingPassword,
@@ -441,6 +478,7 @@ export const useSettingsStore = defineStore('settings', () => {
     fetchNotifications,
     saveNotifications,
     saveNotificationsFromForms,
+    testWeComFromForm,
     testWebhookFromForm,
     testBarkFromForm,
     testEmailFromForm,

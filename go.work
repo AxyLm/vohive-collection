@@ -1,0 +1,12 @@
+go 1.26.3
+
+use (
+	./vohive
+	./vowifi-go
+	./swu-go
+	./quectel-qmi-go
+	./netlink
+	./qqbot
+	./euicc-go
+	./uicc-go
+)

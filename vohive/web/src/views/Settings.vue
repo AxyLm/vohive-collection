@@ -16,10 +16,12 @@ import {
 } from '@vicons/fluent'
 
 const settingsStore = useSettingsStore()
-const { systemInfo, loadingNotifications, savingNotifications, testingWebhook, testingBark, testingEmail, changingPassword, passwordForm, telegramForm, feishuForm, qqForm, webhookSettings, barkSettings, emailForm, pushplusForm } = storeToRefs(settingsStore)
+const { systemInfo, loadingNotifications, savingNotifications, testingWebhook, testingWeCom, testingBark, testingEmail, changingPassword, passwordForm, telegramForm, feishuForm, qqForm, wecomForm, webhookSettings, barkSettings, emailForm, pushplusForm } = storeToRefs(settingsStore)
 const activeNotifyTab = ref('telegram')
 
 
+
+const hasValidWeComURL = computed(() => String(wecomForm.value.webhook_url || '').trim().length > 0)
 
 const hasValidWebhookURLs = computed(() => {
   if (!Array.isArray(webhookSettings.value.urls)) {
@@ -103,6 +105,23 @@ async function saveNotifications() {
     }
   } catch (e: unknown) {
     ElMessage.error(e instanceof Error ? e.message : '通知配置保存失败')
+  }
+}
+
+async function testWeComNotification() {
+  try {
+    const result = await settingsStore.testWeComFromForm()
+    if (!result.ok) {
+      throw new Error(result.error.message || '企业微信测试失败')
+    }
+    const data = result.data
+    if (data.ok) {
+      ElMessage.success(data.message || '测试通知已发送')
+      return
+    }
+    ElMessage.error(data.message || '企业微信测试失败')
+  } catch (e: unknown) {
+    ElMessage.error(e instanceof Error ? e.message : '企业微信测试失败')
   }
 }
 
@@ -439,7 +458,7 @@ onBeforeUnmount(() => {
                </div>
                <div>
                   <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100">通知</h3>
-                  <p class="text-xs text-gray-500">Telegram / 飞书 / QQ / Webhook</p>
+                  <p class="text-xs text-gray-500">Telegram / 飞书 / QQ / 企业微信 / Webhook</p>
                </div>
             </div>
             <el-button type="primary" :loading="savingNotifications" :disabled="loadingNotifications" @click="saveNotifications" class="!border-0">
@@ -560,6 +579,41 @@ onBeforeUnmount(() => {
                       <li>QQbot申请地址：<a href="https://q.qq.com/qqbot/openclaw/index.html" target="_blank" class="underline hover:text-amber-800">官方控制台</a></li>
                       <li>向机器人发送消息后，去系统日志查看 OpenID，填入后 Bot 只对匹配的会话进行回复和推送。</li>
                     </ol>
+                  </div>
+                </div>
+              </el-tab-pane>
+
+              <!-- 企业微信 -->
+              <el-tab-pane label="企业微信" name="wecom" class="pt-2">
+                <div class="flex items-center justify-between mb-4">
+                  <div class="flex items-center gap-2">
+                    <div class="font-bold text-gray-800 dark:text-gray-100">启用企业微信机器人</div>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <el-button
+                      size="small"
+                      type="primary"
+                      plain
+                      :loading="testingWeCom"
+                      :disabled="!wecomForm.enabled || !hasValidWeComURL"
+                      @click="testWeComNotification"
+                    >
+                      测试通知
+                    </el-button>
+                    <el-switch v-model="wecomForm.enabled" />
+                  </div>
+                </div>
+
+                <div class="space-y-4">
+                  <div class="space-y-1">
+                    <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">机器人 Webhook URL</label>
+                    <el-input
+                      v-model="wecomForm.webhook_url"
+                      :disabled="!wecomForm.enabled"
+                      type="password"
+                      show-password
+                      placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=..."
+                    />
                   </div>
                 </div>
               </el-tab-pane>

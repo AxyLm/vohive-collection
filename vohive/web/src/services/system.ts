@@ -56,6 +56,11 @@ export type WebhookSettings = {
   headers: Record<string, string>
 }
 
+export type WeComSettings = {
+  enabled: boolean
+  webhook_url: string
+}
+
 export type BarkSettings = {
   enabled: boolean
   urls: string[]
@@ -88,6 +93,7 @@ export type NotificationsSettingsResponse = {
   qq?: Partial<QQSettings>
   email?: Partial<EmailSettings>
   pushplus?: Partial<PushplusSettings>
+  wecom?: Partial<WeComSettings>
   webhook?: Partial<WebhookSettings>
   bark?: Partial<BarkSettings>
 }
@@ -130,6 +136,10 @@ export type SaveNotificationsPayload = {
     topic: string
     channel: string
   }
+  wecom: {
+    enabled: boolean
+    webhook_url: string
+  }
   webhook: {
     enabled: boolean
     urls: string[]
@@ -161,6 +171,16 @@ export type TestWebhookPayload = {
   retry_max: number
   text_template: string
   headers?: Record<string, string>
+}
+
+export type TestWeComPayload = {
+  enabled: boolean
+  webhook_url: string
+}
+
+export type TestWeComResponse = {
+  ok: boolean
+  message: string
 }
 
 export type TestWebhookResponse = {
@@ -230,6 +250,12 @@ export const systemService = {
   testWebhook(payload: TestWebhookPayload) {
     return callService(async () => {
       const res = await api.post<TestWebhookResponse>('/settings/notifications/webhook/test', payload)
+      return res.data
+    })
+  },
+  testWeCom(payload: TestWeComPayload) {
+    return callService(async () => {
+      const res = await api.post<TestWeComResponse>('/settings/notifications/wecom/test', payload)
       return res.data
     })
   },

@@ -73,6 +73,7 @@ type Config struct {
 	Telegram TelegramConfig `mapstructure:"telegram"`
 	Feishu   FeishuConfig   `mapstructure:"feishu"`
 	QQ       QQConfig       `mapstructure:"qq"`
+	WeCom    WeComConfig    `mapstructure:"wecom"`
 	Webhook  WebhookConfig  `mapstructure:"webhook"`
 
 	Bark     BarkConfig     `mapstructure:"bark"`
@@ -260,10 +261,10 @@ type DeviceConfig struct {
 	USBPath       string `mapstructure:"-"` // Deprecated: 运行时按 IMEI 现解析,绝不从文件读取
 	ATPort        string `mapstructure:"-"` // Deprecated: 运行时解析;AT 终端用 Worker.ResolvedATPort()
 	ProxyPort     int    `mapstructure:"proxy_port"`
-	ManagePort    string `mapstructure:"-"` // Deprecated: 运行时解析,绝不从文件读取
-	Interface     string `mapstructure:"-"` // Deprecated: 运行时解析,绝不从文件读取
-	QMIDevice     string `mapstructure:"-"` // Deprecated: 运行时解析,绝不从文件读取
-	ControlDevice string `mapstructure:"-"` // Deprecated: 运行时按 IMEI 现解析,绝不从文件读取
+	ManagePort    string `mapstructure:"-"`              // Deprecated: 运行时解析,绝不从文件读取
+	Interface     string `mapstructure:"-"`              // Deprecated: 运行时解析,绝不从文件读取
+	QMIDevice     string `mapstructure:"-"`              // Deprecated: 运行时解析,绝不从文件读取
+	ControlDevice string `mapstructure:"-"`              // Deprecated: 运行时按 IMEI 现解析,绝不从文件读取
 	MBIMTransport string `mapstructure:"mbim_transport"` // MBIM 传输: auto|proxy|direct，默认 auto
 	QMIUseProxy   bool   `mapstructure:"qmi_use_proxy"`  // 是否通过 libqmi qmi-proxy 打开 QMI 控制口
 	// 可选：qmi-proxy abstract socket 名称和可执行文件路径。留空使用 quectel-qmi-go 默认值。
@@ -323,6 +324,11 @@ type QQConfig struct {
 	DirectIDs string `mapstructure:"direct_ids"` // 逗号分隔的私聊 OpenID
 }
 
+type WeComConfig struct {
+	Enabled    bool   `mapstructure:"enabled"`
+	WebhookURL string `mapstructure:"webhook_url"`
+}
+
 type WebhookConfig struct {
 	Enabled      bool              `mapstructure:"enabled"`
 	URLs         []string          `mapstructure:"urls"`
@@ -376,6 +382,7 @@ func Load(path string) (*Config, error) {
 	viper.SetDefault("webhook.retry_max", 3)
 	viper.SetDefault("webhook.text_template", DefaultWebhookTextTemplate)
 
+	viper.SetDefault("wecom.enabled", false)
 	viper.SetDefault("bark.enabled", false)
 	viper.SetDefault("bark.group", "vohive")
 	viper.SetDefault("bark.level", "active")
