@@ -226,7 +226,6 @@ func (s *Server) newRouter() *gin.Engine {
 	api.POST("/auth/login", s.handleLogin)
 	api.POST("/rotateip", s.handleRotate)
 	api.OPTIONS("/logs/stream", s.handleLogStreamOptions)
-	api.POST("/system/uninstall", s.handleUninstall)
 	s.registerWebsheetRoutes(api)
 
 	// 以下接口需要鉴权
@@ -258,8 +257,6 @@ func (s *Server) newRouter() *gin.Engine {
 		api.POST("/settings/notifications/email/test", s.handleTestEmailNotification)
 		api.POST("/settings/password", s.handleChangePassword) // 修改登录密码
 		api.GET("/system/info", s.handleSystemInfo)            // 获取系统运行与版本信息
-		api.GET("/system/update/check", s.handleCheckUpdate)   // 检查系统更新
-		api.POST("/system/update/apply", s.handleApplyUpdate)  // 应用系统更新
 
 		api.GET("/devices", s.handleDeviceMgmtList)                                            // 获取设备列表（管理页用）
 		api.POST("/devices", s.handleDeviceMgmtAddDevice)                                      // 添加新设备
