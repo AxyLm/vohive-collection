@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 	"testing"
 
 	"github.com/iniwex5/vohive/internal/config"
@@ -55,5 +56,36 @@ func TestWeComChannelReportsErrCode(t *testing.T) {
 	}
 	if err := ch.Send("测试"); err == nil {
 		t.Fatal("expected errcode failure")
+	}
+}
+
+func TestWeComChannelRetriesTemporaryRequestFailure(t *testing.T) {
+	var calls int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if atomic.AddInt32(&calls, 1) < 3 {
+			hj, ok := w.(http.Hijacker)
+			if !ok {
+				t.Fatal("response writer cannot hijack")
+			}
+			conn, _, err := hj.Hijack()
+			if err != nil {
+				t.Fatalf("hijack: %v", err)
+			}
+			_ = conn.Close()
+			return
+		}
+		_, _ = w.Write([]byte(`{"errcode":0,"errmsg":"ok"}`))
+	}))
+	defer srv.Close()
+
+	ch, err := NewWeComChannel(config.WeComConfig{Enabled: true, WebhookURL: srv.URL})
+	if err != nil {
+		t.Fatalf("NewWeComChannel() error = %v", err)
+	}
+	if err := ch.Send("测试"); err != nil {
+		t.Fatalf("Send() error = %v", err)
+	}
+	if got := atomic.LoadInt32(&calls); got != 3 {
+		t.Fatalf("calls=%d, want 3", got)
 	}
 }

@@ -13,6 +13,11 @@ import (
 	"github.com/iniwex5/vohive/internal/config"
 )
 
+const (
+	weComTimeout  = 30 * time.Second
+	weComAttempts = 3
+)
+
 type WeComChannel struct {
 	webhookURL string
 	client     *http.Client
@@ -37,7 +42,7 @@ func NewWeComChannel(cfg config.WeComConfig) (*WeComChannel, error) {
 	}
 	return &WeComChannel{
 		webhookURL: webhookURL,
-		client:     &http.Client{Timeout: 10 * time.Second},
+		client:     &http.Client{Timeout: weComTimeout},
 	}, nil
 }
 
@@ -56,14 +61,7 @@ func (c *WeComChannel) SendWithContext(ctx NotificationContext) error {
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequest(http.MethodPost, c.webhookURL, bytes.NewReader(body))
-	if err != nil {
-		return err
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", "Vohive-WeCom/1.0")
-
-	resp, err := c.client.Do(req)
+	resp, err := c.do(body)
 	if err != nil {
 		return err
 	}
@@ -83,6 +81,28 @@ func (c *WeComChannel) SendWithContext(ctx NotificationContext) error {
 		return fmt.Errorf("企业微信 webhook 返回 errcode=%d errmsg=%s", out.ErrCode, strings.TrimSpace(out.ErrMsg))
 	}
 	return nil
+}
+
+func (c *WeComChannel) do(body []byte) (*http.Response, error) {
+	var lastErr error
+	for attempt := 1; attempt <= weComAttempts; attempt++ {
+		req, err := http.NewRequest(http.MethodPost, c.webhookURL, bytes.NewReader(body))
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("User-Agent", "Vohive-WeCom/1.0")
+
+		resp, err := c.client.Do(req)
+		if err == nil {
+			return resp, nil
+		}
+		lastErr = err
+		if attempt < weComAttempts {
+			time.Sleep(time.Duration(attempt) * time.Second)
+		}
+	}
+	return nil, lastErr
 }
 
 func marshalWeComText(text string) ([]byte, error) {
